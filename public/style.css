@@ -1,0 +1,15 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  border: 1px solid;
+  height: 100vh;
+}
+
+canvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
