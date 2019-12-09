@@ -52,11 +52,43 @@ class Map {
     this.squares.forEach(squares => {
       squares.forEach(square => {
         if (square.visited) {
-          this.score++;
-          square.visited = false;
+          const group = [];
+
+          // making vertical groups and calculating score
+          for (let i = square.y; i < this.squares.length; i++) {
+            if (this.squares[i][square.x].visited) {
+              this.score++;
+
+              this.squares[i][square.x].visited = false;
+              this.squares[i][square.x].color = "x";
+              group.push(this.squares[i][square.x]);
+            }
+          }
+
+          const distance = group[group.length - 1].y;
+
+          // swap
+          group.forEach(square => {
+            for (let i = distance; i > 0; i--) {
+              const temp = this.squares[i][square.x].color;
+              this.squares[i][square.x].color = this.squares[i - 1][
+                square.x
+              ].color;
+              this.squares[i - 1][square.x].color = temp;
+            }
+          });
+
+          this.squares.forEach(squares => {
+            squares.forEach(square => {
+              if (square.color === "x") {
+                square.color = this.colors[getRandomInt(0, this.colors.length)];
+              }
+            });
+          });
         }
       });
     });
+    this.drawMap();
     scoreDOM.textContent = `Score: ${this.score}`;
   }
 
@@ -64,30 +96,26 @@ class Map {
     if (obj.visited) return;
 
     if (
-      this.squares[obj.y][obj.x + 1] &&
+      obj.x + 1 < this.squares[0].length &&
       obj.color === this.squares[obj.y][obj.x + 1].color
     ) {
       obj.visited = true;
       this.search(this.squares[obj.y][obj.x + 1]);
     }
-    if (
-      this.squares[obj.y][obj.x - 1] &&
-      obj.color === this.squares[obj.y][obj.x - 1].color
-    ) {
+
+    if (obj.x - 1 >= 0 && obj.color === this.squares[obj.y][obj.x - 1].color) {
       obj.visited = true;
       this.search(this.squares[obj.y][obj.x - 1]);
     }
     if (
-      this.squares[obj.y + 1][obj.x] &&
+      obj.y + 1 < this.squares.length &&
       obj.color === this.squares[obj.y + 1][obj.x].color
     ) {
       obj.visited = true;
       this.search(this.squares[obj.y + 1][obj.x]);
     }
-    if (
-      this.squares[obj.y - 1][obj.x] &&
-      obj.color === this.squares[obj.y - 1][obj.x].color
-    ) {
+
+    if (obj.y - 1 >= 0 && obj.color === this.squares[obj.y - 1][obj.x].color) {
       obj.visited = true;
       this.search(this.squares[obj.y - 1][obj.x]);
     }
@@ -128,7 +156,7 @@ class Square {
   }
 }
 
-const m = new Map(12, 12);
+const m = new Map(10, 10);
 m.create();
 m.drawMap();
 
