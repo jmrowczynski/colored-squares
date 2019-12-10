@@ -1,6 +1,6 @@
-const canvas = document.querySelector("canvas");
-const c = canvas.getContext("2d");
-const scoreDOM = document.getElementById("score");
+const canvas = document.querySelector('canvas');
+const c = canvas.getContext('2d');
+const scoreDOM = document.getElementById('score');
 
 const SIZE = 70;
 
@@ -15,19 +15,11 @@ class Map {
     this.x = x;
     this.y = y;
     this.squares = [];
-    this.colors = [
-      "red",
-      "orange",
-      "yellow",
-      "green",
-      "blue",
-      "navy",
-      "purple"
-    ];
+    this.colors = ['red', 'orange', 'yellow', 'green', 'blue', 'navy', 'purple'];
     this.score = 0;
   }
 
-  create() {
+  createMap() {
     for (let i = 0; i < this.y; i++) {
       const tempArr = [];
       for (let j = 0; j < this.x; j++) {
@@ -43,7 +35,40 @@ class Map {
     canvas.width = this.x * SIZE;
     this.squares.forEach(squares => {
       squares.forEach(square => {
-        square.paint();
+        square.draw();
+      });
+    });
+  }
+
+  createGroup(square) {
+    const group = [];
+    for (let i = square.y; i < this.squares.length; i++) {
+      if (this.squares[i][square.x].visited) {
+        this.score++;
+        this.squares[i][square.x].visited = false;
+        this.squares[i][square.x].color = 'x';
+        group.push(this.squares[i][square.x]);
+      }
+    }
+    return group;
+  }
+
+  moveGroup(group, distance) {
+    group.forEach(({ x }) => {
+      for (let i = distance; i > 0; i--) {
+        const temp = this.squares[i][x].color;
+        this.squares[i][x].color = this.squares[i - 1][x].color;
+        this.squares[i - 1][x].color = temp;
+      }
+    });
+  }
+
+  fillEmptySquares() {
+    this.squares.forEach(squares => {
+      squares.forEach(square => {
+        if (square.color === 'x') {
+          square.color = this.colors[getRandomInt(0, this.colors.length)];
+        }
       });
     });
   }
@@ -52,39 +77,10 @@ class Map {
     this.squares.forEach(squares => {
       squares.forEach(square => {
         if (square.visited) {
-          const group = [];
-
-          // making vertical groups and calculating score
-          for (let i = square.y; i < this.squares.length; i++) {
-            if (this.squares[i][square.x].visited) {
-              this.score++;
-
-              this.squares[i][square.x].visited = false;
-              this.squares[i][square.x].color = "x";
-              group.push(this.squares[i][square.x]);
-            }
-          }
-
-          const distance = group[group.length - 1].y;
-
-          // swap
-          group.forEach(square => {
-            for (let i = distance; i > 0; i--) {
-              const temp = this.squares[i][square.x].color;
-              this.squares[i][square.x].color = this.squares[i - 1][
-                square.x
-              ].color;
-              this.squares[i - 1][square.x].color = temp;
-            }
-          });
-
-          this.squares.forEach(squares => {
-            squares.forEach(square => {
-              if (square.color === "x") {
-                square.color = this.colors[getRandomInt(0, this.colors.length)];
-              }
-            });
-          });
+          const group = this.createGroup(square); // making vertical groups and updating score
+          const dist = group[group.length - 1].y;
+          this.moveGroup(group, dist);
+          this.fillEmptySquares();
         }
       });
     });
@@ -94,42 +90,32 @@ class Map {
 
   search(obj) {
     if (obj.visited) return;
-
-    if (
-      obj.x + 1 < this.squares[0].length &&
-      obj.color === this.squares[obj.y][obj.x + 1].color
-    ) {
+    const { x, y, color } = obj;
+    if (x + 1 < this.squares[0].length && color === this.squares[y][x + 1].color) {
       obj.visited = true;
-      this.search(this.squares[obj.y][obj.x + 1]);
+      this.search(this.squares[y][x + 1]);
     }
 
-    if (obj.x - 1 >= 0 && obj.color === this.squares[obj.y][obj.x - 1].color) {
+    if (x - 1 >= 0 && color === this.squares[y][x - 1].color) {
       obj.visited = true;
-      this.search(this.squares[obj.y][obj.x - 1]);
+      this.search(this.squares[y][x - 1]);
     }
-    if (
-      obj.y + 1 < this.squares.length &&
-      obj.color === this.squares[obj.y + 1][obj.x].color
-    ) {
+    if (y + 1 < this.squares.length && color === this.squares[y + 1][x].color) {
       obj.visited = true;
-      this.search(this.squares[obj.y + 1][obj.x]);
+      this.search(this.squares[y + 1][x]);
     }
 
-    if (obj.y - 1 >= 0 && obj.color === this.squares[obj.y - 1][obj.x].color) {
+    if (y - 1 >= 0 && color === this.squares[y - 1][x].color) {
       obj.visited = true;
-      this.search(this.squares[obj.y - 1][obj.x]);
+      this.search(this.squares[y - 1][x]);
     }
   }
 
   init(x, y) {
     m.squares.forEach(squares => {
       squares.forEach(square => {
-        if (
-          square.dx < x &&
-          square.dx + SIZE > x &&
-          square.dy < y &&
-          square.dy + SIZE > y
-        ) {
+        const { dx, dy } = square;
+        if (dx < x && dx + SIZE > x && dy < y && dy + SIZE > y) {
           this.search(square);
           this.update();
         }
@@ -150,17 +136,17 @@ class Square {
     this.visited = false;
   }
 
-  paint() {
+  draw() {
     c.fillStyle = this.color;
     c.fillRect(this.dx, this.dy, this.sizeX, this.sizeY);
   }
 }
 
 const m = new Map(10, 10);
-m.create();
+m.createMap();
 m.drawMap();
 
-canvas.addEventListener("mouseup", function(e) {
+canvas.addEventListener('mouseup', function(e) {
   const rect = this.getBoundingClientRect();
   const x = e.pageX - (rect.left + window.scrollX);
   const y = e.pageY - (rect.top + window.scrollY);

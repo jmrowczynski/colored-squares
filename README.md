@@ -8,5 +8,5 @@
 
 ## 2. Rules
 
-Try to achieve best result by click big gropus of same color squares.
+Try to achieve best result by click big groups of same color squares.
 Clicking on lonely square won't add points.
